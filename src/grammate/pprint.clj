@@ -35,6 +35,10 @@
   java.lang.String
   (-pretty [x ctx]
     [:text (str "'" x "'")])
+    
+  java.util.regex.Pattern
+  (-pretty [x ctx]
+    [:text (str "'" x "'")])  
 
   clojure.lang.Keyword
   (-pretty [x ctx]
@@ -51,8 +55,11 @@
       [:group "{" [:align (interpose [:span :line] kvps) :line]  "}"])))
       
 (defn ppd [doc]
-  (pprint-document doc {:width 10}))
+  (pprint-document doc {:width 80}))
   
 (defn pp [x]
   (ppd (-pretty x nil)))
+
+(defn spitd [f x]
+  (spit f (with-out-str (pp x))))
   
