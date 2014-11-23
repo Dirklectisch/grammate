@@ -21,6 +21,9 @@
              :match #"nil" }
       :boolean { :name "constant.language.boolean.edn"
                  :match #"true|false" }
+      :character { :name "constant.character.edn"
+                   :match #"(\\)(?:newline|return|space|tab|\S)"
+                   :captures {1 { :name "punctuation.definition.character.begin.edn" }}}
       :keyword { :name "constant.other.keyword.edn"
                  :match (re-join ":" sym)
                  :captures { 1 { :name "constant.other.keyword.prefix.edn" }
