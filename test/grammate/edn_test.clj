@@ -19,8 +19,11 @@
   
 (def str-generators
   { :boolean (gen/fmap str gen/boolean)
+    :integer (gen/one-of [(gen/fmap str gen/int)
+                          (gen/fmap #(str % "N") gen/int)
+                          (gen/fmap #(str "+" %) gen/pos-int)])
     :symbol (gen/fmap str gen/symbol)
-    :keyword (gen/fmap str gen/keyword) })
+    :keyword (gen/fmap str gen/keyword)})
     
 (defn other-str-gen [key]
   "Combines all string generators except k"
@@ -39,12 +42,14 @@
 (deftest test-all-matches
   (are [k] (= ((tc/quick-check 100 (prop-match k)) :result) true)
     :boolean
+    :integer
     :symbol
     :keyword))
     
 (deftest test-all-non-matches
   (are [k] (= ((tc/quick-check 100 (prop-not-match k)) :result) true)
     :boolean
+    :integer
     :symbol
     :keyword))
 

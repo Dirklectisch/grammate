@@ -7,9 +7,9 @@
   (re-pattern (join coll)))
         
 (def patterns
-  (let [lbl (re-join #"(?:[\-+][:#.*+!\-_?$%&=A-Za-z]|[.*+!\-_?$%&=A-Za-z])"
-                     #"[:#.*+!\-_?$%&=A-Za-z0-9]*")
-        sym (re-join "(" lbl ")?" "(/)?" "(" lbl ")?")]
+  (let [lbl (re-join #"(?:[-+](?:[-+:#.*!_?$%&=\<>A-Za-z_]|$)|[.*!_?$%&=\<>A-Za-z])"
+                     #"[-+:#.*!_?$%&=\<>\w_]*")
+        sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")]
     { :literals { :patterns (mapv (fn [x] { :include x }) ["#nil" 
                                                            "#boolean" 
                                                            "#character"
@@ -24,13 +24,15 @@
       :character { :name "constant.character.edn"
                    :match #"(\\)(?:newline|return|space|tab|\S)"
                    :captures {1 { :name "punctuation.definition.character.begin.edn" }}}
+      :integer { :name "constant.numeric.integer.edn"
+                 :match #"^[+-]?(?>0N?)|(?>[+-]?[1-9][0-9]*N?)" }
       :keyword { :name "constant.other.keyword.edn"
-                 :match (re-join ":" sym)
+                 :match (re-join ":(?:" sym "|" #"[-+:#.*!_?$%&=\<>\w_]+" ")")
                  :captures { 1 { :name "constant.other.keyword.prefix.edn" }
                              2 { :name "punctuation.definition.keyword.seperator.edn" }
                              3 { :name "constant.other.keyword.name.edn" } }}
       :symbol { :name "variable.other.symbol.edn"
-                :match sym
+                :match (re-join sym "(?<!nil|true|false)")
                 :captures { 1 { :name "variable.other.symbol.prefix.edn" }
                             2 { :name "punctuation.definition.symbol.seperator.edn" }
                             3 { :name "variable.other.symbol.name.edn" } }}}))
@@ -91,18 +93,6 @@
     ;                     |
     ;                     \.\d+
     ;                   )
-    ;                )';
-    ;     };
-    ;     integer = {
-    ;       name = 'constant.numeric.integer.edn';
-    ;       match = '(?x:
-    ;                  (?:
-    ;                    [+-]?
-    ;                    \d
-    ;                    |
-    ;                    [1-9](?:\d)*
-    ;                  )
-    ;                    N?
     ;                )';
     ;     };
     ;     list = {
