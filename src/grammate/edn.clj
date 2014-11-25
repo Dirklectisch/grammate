@@ -27,10 +27,7 @@
       :integer { :name "constant.numeric.integer.edn"
                  :match #"^[+-]?(?>0N?)|(?>[+-]?[1-9][0-9]*N?)" }
       :keyword { :name "constant.other.keyword.edn"
-                 :match (re-join ":(?:" sym "|" #"[-+:#.*!_?$%&=\<>\w_]+" ")")
-                 :captures { 1 { :name "constant.other.keyword.prefix.edn" }
-                             2 { :name "punctuation.definition.keyword.seperator.edn" }
-                             3 { :name "constant.other.keyword.name.edn" } }}
+                 :match (re-join ":(?:" sym "|" #"[-+:#.*!_?$%&=\<>\w_]+" ")" "(?<!/)" )}
       :symbol { :name "variable.other.symbol.edn"
                 :match (re-join sym "(?<!nil|true|false)")
                 :captures { 1 { :name "variable.other.symbol.prefix.edn" }

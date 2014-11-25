@@ -5,7 +5,9 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
             [clojure.test.check.clojure-test :refer [defspec]]))
-            
+
+; Helpers
+
 (defn match? [re s]
   "Returns true if regex re matches the complete string s"
   (if-let [ma (re-matches re s)]
@@ -16,6 +18,18 @@
 
 (defn get-re [k]
   (-> patterns k :match))
+  
+; Unit tests
+
+(deftest nil-test
+  (is (match? (get-re :nil) "nil"))
+  (is (not (match? (get-re :nil) "nil-test"))))
+  
+(deftest keyword-test
+  (is (not (match? (get-re :keyword) ":/")))
+  (is (not (match? (get-re :keyword) "::foo"))))
+  
+; Generative tests
   
 (def str-generators
   { :boolean (gen/fmap str gen/boolean)
@@ -52,7 +66,3 @@
     :integer
     :symbol
     :keyword))
-
-(deftest nil-test
-  (is (match? (get-re :nil) "nil"))
-  (is (not (match? (get-re :nil) "nil-test"))))      
