@@ -30,18 +30,22 @@
   (is (not (match? (get-re :keyword) "::foo"))))
   
 ; Generative tests
+
+; test.check documentation here: https://github.com/clojure/test.check/blob/master/README.md
   
 (def str-generators
   { :boolean (gen/fmap str gen/boolean)
     :integer (gen/one-of [(gen/fmap str gen/int)
                           (gen/fmap #(str % "N") gen/int)
                           (gen/fmap #(str "+" %) gen/pos-int)])
+    :character (gen/frequency [[4 (gen/elements ["\\newline" "\\return" "\\space" "\\tab"])]
+                               [96 (gen/fmap #(str "\\" %) gen/char-ascii)]])                      
     :symbol (gen/fmap str gen/symbol)
     :keyword (gen/fmap str gen/keyword)})
     
-(defn other-str-gen [key]
+(defn other-str-gen [k]
   "Combines all string generators except k"
-  (->> (filter (fn [p] (not= (first p) key)) str-generators)
+  (->> (filter (fn [p] (not= (first p) k)) str-generators)
        (mapv (fn [p] (last p)))
        (gen/one-of)))
        
@@ -54,11 +58,12 @@
     ((complement match?) (get-re k) s)))
 
 (deftest test-all-matches
-  (are [k] (= ((tc/quick-check 100 (prop-match k)) :result) true)
-    :boolean
-    :integer
-    :symbol
-    :keyword))
+  (are [k x] (= ((tc/quick-check x (prop-match k)) :result) true)
+    :boolean 10
+    :character 1000
+    :integer 100
+    :symbol 100
+    :keyword 100))
     
 (deftest test-all-non-matches
   (are [k] (= ((tc/quick-check 100 (prop-not-match k)) :result) true)

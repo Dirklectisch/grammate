@@ -7,8 +7,7 @@
   (re-pattern (join coll)))
         
 (def patterns
-  (let [lbl (re-join #"(?:[-+](?:[-+:#.*!_?$%&=\<>A-Za-z_]|$)|[.*!_?$%&=\<>A-Za-z])"
-                     #"[-+:#.*!_?$%&=\<>\w_]*")
+  (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|$)|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
         sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")]
     { :literals { :patterns (mapv (fn [x] { :include x }) ["#nil" 
                                                            "#boolean" 
@@ -22,12 +21,12 @@
       :boolean { :name "constant.language.boolean.edn"
                  :match #"true|false" }
       :character { :name "constant.character.edn"
-                   :match #"(\\)(?:newline|return|space|tab|\S)"
+                   :match #"(\\)(?:newline|return|space|tab|[\x00-\x7F])"
                    :captures {1 { :name "punctuation.definition.character.begin.edn" }}}
       :integer { :name "constant.numeric.integer.edn"
                  :match #"^[+-]?(?>0N?)|(?>[+-]?[1-9][0-9]*N?)" }
       :keyword { :name "constant.other.keyword.edn"
-                 :match (re-join ":(?:" sym "|" #"[-+:#.*!_?$%&=\<>\w_]+" ")" "(?<!/)" )}
+                 :match (re-join #":[-+#.*!?$%&=><\w][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" )}
       :symbol { :name "variable.other.symbol.edn"
                 :match (re-join sym "(?<!nil|true|false)")
                 :captures { 1 { :name "variable.other.symbol.prefix.edn" }
