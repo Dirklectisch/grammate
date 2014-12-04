@@ -8,7 +8,8 @@
         
 (def patterns
   (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|$)|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
-        sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")]
+        sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")
+        int #"[+-]?(0|[1-9][0-9]*)"]
     { :literals { :patterns (mapv (fn [x] { :include x }) ["#nil" 
                                                            "#boolean" 
                                                            "#character"
@@ -24,7 +25,9 @@
                    :match #"(\\)(?:newline|return|space|tab|[\x00-\x7F])"
                    :captures {1 { :name "punctuation.definition.character.begin.edn" }}}
       :integer { :name "constant.numeric.integer.edn"
-                 :match #"^[+-]?(?>0N?)|(?>[+-]?[1-9][0-9]*N?)" }
+                 :match #"[+-]?(0|[1-9][0-9]*)N?" }
+      :floating-point-number { :name "constant.numeric.float"
+                               :match (re-join int #"(?:M|\.\d+(?:[eE][+-]?\d+)?M?|[eE][+-]?\d+M?)")}
       :keyword { :name "constant.other.keyword.edn"
                  :match (re-join #":[-+#.*!?$%&=><\w][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" )}
       :symbol { :name "variable.other.symbol.edn"
@@ -57,18 +60,6 @@
     ;         {  include = '#sequence'; },
     ;         {  include = '#symbol'; },
     ;       );
-    ;     };
-    ;     character = {
-    ;       name = 'constant.character.edn';
-    ;       match = '(?x:                              # turn on extended mode
-    ;                  (\\)                            # a literal backslash
-    ;                  (?:                             # ...followed by...
-    ;                    newline|return|space|tab      # one of these words
-    ;                    |                             # ...or...
-    ;                    \S                            # a non whitespace character
-    ;                  )
-    ;                )';
-    ;       captures = { 1 = { name = 'punctuation.definition.character.begin.edn'; }; };
     ;     };
     ;     floating-point-numbers = {
     ;       name = 'constant.numeric.float';

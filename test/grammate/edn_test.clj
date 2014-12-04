@@ -32,16 +32,30 @@
 ; Generative tests
 
 ; test.check documentation here: https://github.com/clojure/test.check/blob/master/README.md
-  
+
+(defn gen-join-str [& gs]
+  "Returns a generators that joins the string results of several others"
+  (gen/fmap clojure.string/join (apply gen/tuple gs)))
+
 (def str-generators
-  { :boolean (gen/fmap str gen/boolean)
-    :integer (gen/one-of [(gen/fmap str gen/int)
-                          (gen/fmap #(str % "N") gen/int)
-                          (gen/fmap #(str "+" %) gen/pos-int)])
-    :character (gen/frequency [[4 (gen/elements ["\\newline" "\\return" "\\space" "\\tab"])]
-                               [96 (gen/fmap #(str "\\" %) gen/char-ascii)]])                      
-    :symbol (gen/fmap str gen/symbol)
-    :keyword (gen/fmap str gen/keyword)})
+  (let [gen-int-str (gen/one-of [(gen/fmap str gen/int)
+                                 (gen/fmap #(str "+" %) gen/pos-int)])
+        gen-exp-str (gen-join-str (gen/elements ["e" "E"])
+                                  (gen/elements ["" "+" "-"])
+                                  gen/pos-int)
+        gen-frac-str (gen/fmap #(str (float %)) gen/ratio)]
+    { :boolean (gen/fmap str gen/boolean)                          
+      :character (gen/frequency [[4 (gen/elements ["\\newline" "\\return" "\\space" "\\tab"])]
+                                 [96 (gen/fmap #(str "\\" %) gen/char-ascii)]])
+      :integer (gen/one-of [gen-int-str
+                            (gen/fmap #(str % "N") gen-int-str)])
+      :floating-point-number (gen/frequency [[25 (gen/fmap #(str % "M") gen-int-str)]
+                                             [75 (gen-join-str (gen/one-of [gen-frac-str
+                                                                            (gen-join-str gen-int-str gen-exp-str)
+                                                                            (gen-join-str gen-frac-str gen-exp-str)])
+                                                                (gen/elements ["M" ""]))]])
+      :symbol (gen/fmap str gen/symbol)
+      :keyword (gen/fmap str gen/keyword)}))
     
 (defn other-str-gen [k]
   "Combines all string generators except k"
@@ -62,6 +76,7 @@
     :boolean 10
     :character 1000
     :integer 100
+    :floating-point-number 100
     :symbol 100
     :keyword 100))
     
@@ -69,5 +84,6 @@
   (are [k] (= ((tc/quick-check 100 (prop-not-match k)) :result) true)
     :boolean
     :integer
+    :floating-point-number
     :symbol
     :keyword))
