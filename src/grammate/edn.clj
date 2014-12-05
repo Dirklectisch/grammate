@@ -22,7 +22,12 @@
   (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|(?!\\.|[-+:#.*!?$%&=><\w\\/]))|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
         sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")
         int #"[+-]?(0|[1-9][0-9]*)"]
-    { :value { :patterns (incl-vec ["#literal" "#sequence" "#symbol"])}
+    { :comment { :name "comment.line.semicolon.edn" 
+                 :begin #";"
+                 :end #"\n" }
+      :tag { :name "variable.other.tag.edn" 
+             :match #"#[A-Za-z][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" }
+      :value { :patterns (incl-vec ["#literal" "#sequence" "#symbol"])}
       :literal { :patterns (incl-vec [ "#nil" 
                                        "#boolean" 
                                        "#character"
@@ -84,24 +89,5 @@
       }))
 
 (def grammar
-  { :patterns (incl-vec ["#value"])
+  { :patterns (incl-vec ["#comment" "#tag" "#value"])
     :repository patterns })
-
-    ; {  patterns = (
-    ;     {  name = 'punctuation.whitespace.edn';
-    ;       match = '\s|,';
-    ;     },
-    ;     {  name = 'comment.line.semicolon.edn';
-    ;       begin = ';';
-    ;       end = '\n';
-    ;     },
-    ;     {  include = '#tag'; },
-    ;     {  include = '#value'; },
-    ;   );
-    ;   repository = {
-    ;     tag = {
-    ;       name = 'variable.other.tag.edn';
-    ;       match = '#[_A-Za-z0-9][:#.*+!\-_?$%&=A-Za-z0-9]*';
-    ;     };
-    ;   };
-    ; }

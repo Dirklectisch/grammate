@@ -1,6 +1,4 @@
-(ns grammate.core)
-
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(ns grammate.core
+  (:require [grammate.edn :as edn]
+            [grammate.pprint :as pprint]))
+            
