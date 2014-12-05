@@ -62,10 +62,18 @@
 
 (defn malformed-str-gen [k]
   "Returns a generator for a string of type k enclosed by two strings of another type.
-   Example: niltrue-99 for type :boolean"
+   Example: niltrue-99 for type :boolean. Only generates strings that do not match completely."
    (let [others (other-str-gen k)]
-     (gen-join-str others (str-generators k) others)))
-       
+     (gen/such-that 
+       (fn [s] ((complement match?) (get-re k) s))
+       (gen-join-str others (str-generators k) others))))
+
+(defn within-coll-str-gen [k]
+  (let [this-gen (str-generators k)]
+    (gen/one-of [(gen/fmap #(str "[" % "]") this-gen)
+                 (gen/fmap #(str "(" % ")") this-gen)
+                 (gen/fmap #(str "#{" % "}") this-gen)])))
+   
 (defn prop-match [k]
   (prop/for-all [s (str-generators k)]
     (match? (get-re k) s)))
@@ -77,6 +85,10 @@
 (defn prop-not-part-of [k]
   (prop/for-all [s (malformed-str-gen k)]
     (if (re-find (get-re k) s) false true)))
+
+(defn prop-is-part-of [k]
+  (prop/for-all [s (within-coll-str-gen k)]
+    (= 1 (count (re-seq (get-re k) s)))))
 
 (deftest test-all-matches
   (are [k x] (= ((tc/quick-check x (prop-match k)) :result) true)
@@ -98,9 +110,21 @@
     :keyword))
     
 (deftest test-malformed-boundries
-  (are [k] (= ((tc/quick-check 1000 (prop-not-part-of k)) :result) true)
+  (are [k] (= ((tc/quick-check 1000 (prop-is-part-of k)) :result) true)
     :nil
     :boolean
     :character
     :integer
-    :floating-point-number))    
+    :floating-point-number
+    :symbol
+    :keyword))    
+
+(deftest test-colletion-boundries
+  (are [k] (= ((tc/quick-check 100 (prop-not-part-of k)) :result) true)
+    :nil
+    :boolean
+    :character
+    :integer
+    :floating-point-number
+    :symbol
+    :keyword))    

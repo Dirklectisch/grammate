@@ -1,4 +1,5 @@
 (ns grammate.edn
+  "Home of some really crazy but well tested regular expressions"
   (:require [clojure.string :refer [join]]))
 
 ; The EDN spec can be found here: https://github.com/edn-format/edn
@@ -15,7 +16,7 @@
     (re-join ws "(?:" r ")" we)))  
         
 (def patterns
-  (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|$)|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
+  (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|(?!\\.|[-+:#.*!?$%&=><\w\\/]))|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
         sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")
         int #"[+-]?(0|[1-9][0-9]*)"]
     { :literals { :patterns (mapv (fn [x] { :include x }) ["#nil" 
