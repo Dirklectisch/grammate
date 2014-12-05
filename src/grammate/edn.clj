@@ -1,10 +1,18 @@
 (ns grammate.edn
   (:require [clojure.string :refer [join]]))
 
-; The EDN spec can be found here: https://github.com/edn-format/edn 
+; The EDN spec can be found here: https://github.com/edn-format/edn
+; Java's regex documentation can be found here: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
 
 (defn re-join [& coll]
   (re-pattern (join coll)))
+
+(defn re-wb [r]
+  "Encloses pattern r using custom word boundries"
+  (let [wc #"\\.|[-+:#.*!?$%&=><\w\\/]"
+        ws (re-join "(?<!" wc ")(?=" wc ")" )
+        we (re-join "(?<=" wc ")(?!" wc ")" )]
+    (re-join ws "(?:" r ")" we)))  
         
 (def patterns
   (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|$)|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
@@ -18,23 +26,26 @@
                                                            "#keyword"
                                                            "#string"]) }
       :nil { :name "constant.language.nil.edn"
-             :match #"nil" }
+             :match (re-wb #"nil")}
       :boolean { :name "constant.language.boolean.edn"
-                 :match #"true|false" }
+                 :match (re-wb #"true|false") }
       :character { :name "constant.character.edn"
-                   :match #"(\\)(?:newline|return|space|tab|[\x00-\x7F])"
+                   :match (re-wb #"(\\)(?:newline|return|space|tab|[\x00-\x7F])")
                    :captures {1 { :name "punctuation.definition.character.begin.edn" }}}
       :integer { :name "constant.numeric.integer.edn"
-                 :match #"[+-]?(0|[1-9][0-9]*)N?" }
+                 :match (re-wb #"[+-]?(0|[1-9][0-9]*)N?") }
       :floating-point-number { :name "constant.numeric.float"
-                               :match (re-join int #"(?:M|\.\d+(?:[eE][+-]?\d+)?M?|[eE][+-]?\d+M?)")}
+                               :match (re-wb (re-join int #"(?:M|\.\d+(?:[eE][+-]?\d+)?M?|[eE][+-]?\d+M?)"))}
       :keyword { :name "constant.other.keyword.edn"
-                 :match (re-join #":[-+#.*!?$%&=><\w][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" )}
+                 :match (re-wb #":[-+#.*!?$%&=><\w][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" )}
       :symbol { :name "variable.other.symbol.edn"
-                :match (re-join sym "(?<!nil|true|false)")
+                :match (re-wb (re-join sym "(?<!nil|true|false)"))
                 :captures { 1 { :name "variable.other.symbol.prefix.edn" }
                             2 { :name "punctuation.definition.symbol.seperator.edn" }
-                            3 { :name "variable.other.symbol.name.edn" } }}}))
+                            3 { :name "variable.other.symbol.name.edn" } }}
+      :string { :name "string.quoted.double.edn"
+                :begin "\""
+                :end "\"" }}))
   
 (def grammar
   { :patterns [ { :include "#boolean" } 
@@ -60,27 +71,6 @@
     ;         {  include = '#sequence'; },
     ;         {  include = '#symbol'; },
     ;       );
-    ;     };
-    ;     floating-point-numbers = {
-    ;       name = 'constant.numeric.float';
-    ;       comment = 'TODO: refactor expression to be more DRY';
-    ;       match = '(?x:
-    ;                   (?:
-    ;                     [+-]?
-    ;                     \d
-    ;                     |
-    ;                     [1-9](?:\d)*
-    ;                   )
-    ;                   (?:
-    ;                     M
-    ;                     |
-    ;                     (e | e\+ | e\- | E | E\+ | E\-)\d+
-    ;                     |
-    ;                     \.\d+ (e | e\+ | e\- | E | E\+ | E\-) \d+
-    ;                     |
-    ;                     \.\d+
-    ;                   )
-    ;                )';
     ;     };
     ;     list = {
     ;       name = 'meta.structure.list.edn';

@@ -20,10 +20,6 @@
   (-> patterns k :match))
   
 ; Unit tests
-
-(deftest nil-test
-  (is (match? (get-re :nil) "nil"))
-  (is (not (match? (get-re :nil) "nil-test"))))
   
 (deftest keyword-test
   (is (not (match? (get-re :keyword) ":/")))
@@ -34,7 +30,7 @@
 ; test.check documentation here: https://github.com/clojure/test.check/blob/master/README.md
 
 (defn gen-join-str [& gs]
-  "Returns a generators that joins the string results of several others"
+  "Returns a generator that joins the string results of several others"
   (gen/fmap clojure.string/join (apply gen/tuple gs)))
 
 (def str-generators
@@ -44,7 +40,8 @@
                                   (gen/elements ["" "+" "-"])
                                   gen/pos-int)
         gen-frac-str (gen/fmap #(str (float %)) gen/ratio)]
-    { :boolean (gen/fmap str gen/boolean)                          
+    { :nil (gen/return "nil")
+      :boolean (gen/fmap str gen/boolean)                          
       :character (gen/frequency [[4 (gen/elements ["\\newline" "\\return" "\\space" "\\tab"])]
                                  [96 (gen/fmap #(str "\\" %) gen/char-ascii)]])
       :integer (gen/one-of [gen-int-str
@@ -62,6 +59,12 @@
   (->> (filter (fn [p] (not= (first p) k)) str-generators)
        (mapv (fn [p] (last p)))
        (gen/one-of)))
+
+(defn malformed-str-gen [k]
+  "Returns a generator for a string of type k enclosed by two strings of another type.
+   Example: niltrue-99 for type :boolean"
+   (let [others (other-str-gen k)]
+     (gen-join-str others (str-generators k) others)))
        
 (defn prop-match [k]
   (prop/for-all [s (str-generators k)]
@@ -70,9 +73,14 @@
 (defn prop-not-match [k]
   (prop/for-all [s (other-str-gen k)]
     ((complement match?) (get-re k) s)))
+    
+(defn prop-not-part-of [k]
+  (prop/for-all [s (malformed-str-gen k)]
+    (if (re-find (get-re k) s) false true)))
 
 (deftest test-all-matches
   (are [k x] (= ((tc/quick-check x (prop-match k)) :result) true)
+    :nil 1
     :boolean 10
     :character 1000
     :integer 100
@@ -82,8 +90,17 @@
     
 (deftest test-all-non-matches
   (are [k] (= ((tc/quick-check 100 (prop-not-match k)) :result) true)
+    :nil
     :boolean
     :integer
     :floating-point-number
     :symbol
     :keyword))
+    
+(deftest test-malformed-boundries
+  (are [k] (= ((tc/quick-check 1000 (prop-not-part-of k)) :result) true)
+    :nil
+    :boolean
+    :character
+    :integer
+    :floating-point-number))    
