@@ -22,7 +22,7 @@
   (let [lbl (re-join #"(?:[-+](?:[-+:#.*!?$%&=><A-Za-z_]|(?!\\.|[-+:#.*!?$%&=><\w\\/]))|[.*!?$%&=><A-Za-z_])[-+:#.*!?$%&=><\w]*")
         sym (re-join "(?:(?:(" lbl ")/)?" "(" lbl ")|/)")
         int #"[+-]?(0|[1-9][0-9]*)"]
-    { :value { :patterns (incl-vec ["#literal" "#sequence" "symbol"])}
+    { :value { :patterns (incl-vec ["#literal" "#sequence" "#symbol"])}
       :literal { :patterns (incl-vec [ "#nil" 
                                        "#boolean" 
                                        "#character"
@@ -45,7 +45,7 @@
       :keyword { :name "constant.other.keyword.edn"
                  :match (re-wb #":[-+#.*!?$%&=><\w][-+:#.*!?$%&=><\w]*(?:/[-+:#.*!?$%&=><\w]+)?" )}
       :symbol { :name "variable.other.symbol.edn"
-                :match (re-wb sym)
+                :match (re-wb (re-join sym "(?<!^true$|^false$|^nil$)"))
                 :captures { 1 { :name "variable.other.symbol.prefix.edn" }
                             2 { :name "punctuation.definition.symbol.seperator.edn" }
                             3 { :name "variable.other.symbol.name.edn" } }}

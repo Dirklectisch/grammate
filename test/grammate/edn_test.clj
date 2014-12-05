@@ -20,6 +20,9 @@
   (-> patterns k :match))
   
 ; Unit tests
+
+(deftest symbol-test
+  (is (match? (get-re :symbol) "niltruefalse")))
   
 (deftest keyword-test
   (is (not (match? (get-re :keyword) ":/")))
